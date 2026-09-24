@@ -47,3 +47,16 @@ Read `stations.json` and `messages.json`. Hash the exact bytes of `messages.json
 * Run the loader when the server starts, after connecting to the database.
 * Organize the folders and put reusable functions in `utils/`.
 * Leave the daily sales report for later.
+
+(Antigravity Claude Sonnet 4.6 (Thinking))
+
+Review the loader and check whether it handles these cases:
+* Invalid fields, dates, numbers, and packet types
+* Bad packets versus a file that cannot be parsed
+* Exact sale replays versus conflicting sales
+* Duplicate tank readings
+* A clear tolerance for amount mismatches
+* Unknown controllers and their timestamps
+* Unchanged row counts after two runs, plus the known examples in the data
+
+For each item, tell me what the code currently does and what is missing. Do not change any code yet.
