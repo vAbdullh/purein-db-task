@@ -4,49 +4,99 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
 }
 
-model stations {
-  station_code       String             @id @db.VarChar(10)
-  station_name       String             @db.VarChar(255)
-  pts_id             String             @unique @db.VarChar(50)
-  utc_offset_minutes Int
-  transactions       transactions[]
-  probe_measurements probe_measurements[]
+model station {
+  station_code       String  @id
+  station_name       String
+  pts_id             String  @unique
+  utc_offset_minutes Int     @db.SmallInt
+
+  sales              sale[]
+  probe_readings     probe_reading[]
 }
 
-model transactions {
-  station_code    String   @db.VarChar(10)
-  pump            Int
-  nozzle          Int
-  transaction_id  Int
-  fuel_grade_id   Int?
-  fuel_grade_name String?  @db.VarChar(50)
-  volume          Decimal? @db.Decimal(10, 2)
-  price           Decimal? @db.Decimal(10, 2)
-  amount          Decimal? @db.Decimal(10, 2)
-  local_datetime  DateTime @db.Timestamp(6)
-  riyadh_datetime DateTime @db.Timestamp(6)
-  stations        stations @relation(fields: [station_code], references: [station_code])
+model delivery {
+  id              BigInt   @id @default(autoincrement())
+  source_hash     String
+  source_position Int
+  pts_id          String
+  protocol        String
+  raw_message     Json
 
-  @@id([station_code, pump, transaction_id])
+  packets         packet[]
+
+  @@unique([source_hash, source_position])
 }
 
-model probe_measurements {
-  station_code            String   @db.VarChar(10)
-  probe                   Int
-  local_datetime          DateTime @db.Timestamp(6)
-  riyadh_datetime         DateTime @db.Timestamp(6)
-  fuel_grade_id           Int?
-  fuel_grade_name         String?  @db.VarChar(50)
-  status                  String?  @db.VarChar(50)
-  product_height          Decimal? @db.Decimal(10, 2)
-  water_height            Decimal? @db.Decimal(10, 2)
-  temperature             Decimal? @db.Decimal(10, 2)
-  product_volume          Decimal? @db.Decimal(10, 2)
-  tank_filling_percentage Decimal? @db.Decimal(5, 2)
-  stations                stations @relation(fields: [station_code], references: [station_code])
+model packet {
+  id                 BigInt   @id @default(autoincrement())
+  delivery_id        BigInt
+  packet_position    Int
+  reported_packet_id Int?
+  packet_type        String
+  raw_packet         Json
 
-  @@id([station_code, probe, local_datetime])
+  delivery           delivery @relation(fields: [delivery_id], references: [id])
+  sale               sale?
+  probe_reading      probe_reading?
+  data_issues        data_issue[]
+
+  @@unique([delivery_id, packet_position])
+}
+
+model sale {
+  id                  BigInt   @id @default(autoincrement())
+  source_packet_id    BigInt   @unique
+  pts_id              String
+  pump                String
+  nozzle              String
+  transaction_number  String
+  fuel_grade_name     String
+  controller_time     DateTime @db.Timestamp(6)
+  event_time_utc      DateTime @db.Timestamptz(6)
+  volume_litres       Decimal  @db.Decimal(12, 3)
+  price_sar_per_litre Decimal  @db.Decimal(12, 3)
+  amount_sar          Decimal  @db.Decimal(14, 2)
+
+  packet              packet   @relation(fields: [source_packet_id], references: [id])
+  station             station  @relation(fields: [pts_id], references: [pts_id])
+
+  @@unique([pts_id, pump, transaction_number])
+}
+
+model probe_reading {
+  id                    BigInt   @id @default(autoincrement())
+  source_packet_id      BigInt   @unique
+  pts_id                String
+  probe                 String
+  controller_time       DateTime @db.Timestamp(6)
+  event_time_utc        DateTime @db.Timestamptz(6)
+  product_volume_litres Decimal  @db.Decimal(14, 3)
+
+  packet                packet   @relation(fields: [source_packet_id], references: [id])
+  station               station  @relation(fields: [pts_id], references: [pts_id])
+}
+
+model data_issue {
+  id         BigInt @id @default(autoincrement())
+  packet_id  BigInt
+  issue_code String // Checked in DB: UNKNOWN_CONTROLLER, DUPLICATE_SALE, CONFLICTING_SALE, AMOUNT_MISMATCH, INVALID_PACKET
+  details    String
+
+  packet     packet @relation(fields: [packet_id], references: [id])
+
+  @@unique([packet_id, issue_code])
+}
+
+view daily_station_sales {
+  station_code String
+  riyadh_day   DateTime @db.Date
+  sales_count  BigInt
+  total_litres Decimal
+  total_sar    Decimal
+
+  @@unique([station_code, riyadh_day])
 }
