@@ -1,0 +1,52 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model stations {
+  station_code       String             @id @db.VarChar(10)
+  station_name       String             @db.VarChar(255)
+  pts_id             String             @unique @db.VarChar(50)
+  utc_offset_minutes Int
+  transactions       transactions[]
+  probe_measurements probe_measurements[]
+}
+
+model transactions {
+  station_code    String   @db.VarChar(10)
+  pump            Int
+  nozzle          Int
+  transaction_id  Int
+  fuel_grade_id   Int?
+  fuel_grade_name String?  @db.VarChar(50)
+  volume          Decimal? @db.Decimal(10, 2)
+  price           Decimal? @db.Decimal(10, 2)
+  amount          Decimal? @db.Decimal(10, 2)
+  local_datetime  DateTime @db.Timestamp(6)
+  riyadh_datetime DateTime @db.Timestamp(6)
+  stations        stations @relation(fields: [station_code], references: [station_code])
+
+  @@id([station_code, pump, transaction_id])
+}
+
+model probe_measurements {
+  station_code            String   @db.VarChar(10)
+  probe                   Int
+  local_datetime          DateTime @db.Timestamp(6)
+  riyadh_datetime         DateTime @db.Timestamp(6)
+  fuel_grade_id           Int?
+  fuel_grade_name         String?  @db.VarChar(50)
+  status                  String?  @db.VarChar(50)
+  product_height          Decimal? @db.Decimal(10, 2)
+  water_height            Decimal? @db.Decimal(10, 2)
+  temperature             Decimal? @db.Decimal(10, 2)
+  product_volume          Decimal? @db.Decimal(10, 2)
+  tank_filling_percentage Decimal? @db.Decimal(5, 2)
+  stations                stations @relation(fields: [station_code], references: [station_code])
+
+  @@id([station_code, probe, local_datetime])
+}
