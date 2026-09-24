@@ -4,7 +4,8 @@
   "description": "Node.js service for Pure-IN",
   "main": "index.js",
   "scripts": {
-    "start": "prisma migrate deploy && node index.js"
+    "start": "prisma migrate deploy && node index.js",
+    "report": "node report.js"
   },
   "dependencies": {
     "@prisma/client": "^5.11.0",

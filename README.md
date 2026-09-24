@@ -4,6 +4,52 @@ Reads controller messages from four fuel stations, loads them into PostgreSQL, a
 
 ---
 
+## Setup, Loader, and Report Commands
+
+**Requirements:** Docker and Docker Compose installed.
+
+1. Copy the environment template and fill in your values:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Build and start the services (Setup & Loader):
+   ```bash
+   docker-compose up -d --build
+   ```
+
+   On first run this will:
+   - Start a PostgreSQL container
+   - Apply the database migration (`db/schema.sql`)
+   - Start the Node.js server
+   - Run the data loader automatically (loads 119 deliveries, 206 packets).
+
+3. Run the Loader manually again (to test idempotency):
+   ```bash
+   docker-compose exec server node loader/index.js
+   ```
+
+4. Run the Report:
+   ```bash
+   docker-compose exec server npm run report
+   ```
+   This prints the aggregated litres and SAR per station per Riyadh day.
+
+5. To stop:
+   ```bash
+   docker-compose down
+   ```
+
+## Data Quality Decisions
+
+- **Duplicates**: Handled strictly. Transaction numbers reused across pumps are kept as separate sales. Repeated deliveries (e.g. 4/9, 92/101) are loaded into `delivery` and `packet` but only inserted once into `sale` or `probe_reading`.
+- **Unknown Controllers**: Packets from unregistered controllers are saved and flagged (`UNKNOWN_CONTROLLER`) but are excluded from the daily station report totals.
+- **Data Integrity**: Delivery 51, Packet 1 reports an amount of 1,246.60 SAR which doesn't match the volume/price. The original reported amount is retained and flagged as `AMOUNT_MISMATCH` rather than implicitly corrected. The flagged amount is included in the totals.
+- **Timezones**: The report converts the UTC event time to `Asia/Riyadh` for bucketing. For instance, Station D's sale on 2026-09-13 22:42:12 UTC appears correctly on September 14 in Riyadh.
+- **Tank Readings**: Probe measurements (tank inventory) are preserved in their own table (`probe_reading`) and are strictly excluded from sales totals.
+
+---
+
 ## Getting Started with Docker
 
 **Requirements:** Docker and Docker Compose installed.

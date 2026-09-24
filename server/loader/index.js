@@ -354,3 +354,6 @@ async function runLoader() {
 }
 
 module.exports = { runLoader };
+
+if (require.main === module) { runLoader().catch(console.error); }
+

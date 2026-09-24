@@ -60,3 +60,11 @@ Review the loader and check whether it handles these cases:
 * Unchanged row counts after two runs, plus the known examples in the data
 
 For each item, tell me what the code currently does and what is missing. Do not change any code yet.
+
+## 5. Implement Report and Clean Setup Verification
+(Antigravity Gemini 3.1 PRO)
+
+1. Create the server/report.js script to query the view.
+2. Update package.json to add a report script.
+3. Fix README to include exact commands for setup, loader, and report, and document data-quality decisions.
+4. Run the loader twice to confirm idempotency.
