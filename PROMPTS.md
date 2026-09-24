@@ -34,3 +34,16 @@ THIS SCHEMA IS WRONG, YOU MISSED MANY FIELDS LIKE IN STATION TABLE WE HAVE FOUR 
 (Antigravity GEMINI 3.1 PRO)
 
 Use `db/schema.sql` as the reference to create the Prisma schema and set up Prisma migrations. Keep the tables, relationships, and constraints aligned with the SQL, then create the initial migration.
+
+(Antigravity Claude Sonnet 4.6 (Thinking))
+
+
+Build the loader in `server/` using the Prisma schema we already made.
+Read `stations.json` and `messages.json`. Hash the exact bytes of `messages.json` with SHA-256 and save the hash as `source_hash`. Use it with each delivery’s position so running the loader again does not insert the same data. Keep the original JSON and the order of deliveries and packets.
+
+* Convert the times from registered controllers to UTC.
+* If the same sale arrives again, count it once. Use the existing issue codes to flag unknown controllers, conflicting sales, invalid packets, and amounts that do not match the volume and price. Keep the reported values as they are.
+* Load the file in one database transaction.
+* Run the loader when the server starts, after connecting to the database.
+* Organize the folders and put reusable functions in `utils/`.
+* Leave the daily sales report for later.

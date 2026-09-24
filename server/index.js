@@ -1,6 +1,6 @@
 require('dotenv').config({ path: '../.env' });
 const express = require('express');
-const { prisma, connectDB } = require('./config/db');
+const { prisma, connectAndLoad } = require('./config/db');
 const logger = require('./config/logger');
 
 const app = express();
@@ -19,5 +19,5 @@ app.get('/', async (req, res) => {
 
 app.listen(PORT, () => {
     logger.info(`Server listening on port ${PORT}`);
-    connectDB();
+    connectAndLoad();
 });

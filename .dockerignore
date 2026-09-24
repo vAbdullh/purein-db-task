@@ -5,7 +5,7 @@ npm-debug.log
 .git
 .gitignore
 
-# Ignore heavy root files and DB scripts
+# Ignore heavy root data files — they are copied into server/data/ instead
 messages.json
 stations.json
 *.sql
